@@ -214,7 +214,21 @@ public class RouteProcessor extends BaseProcessor {
                     routeMeta = new RouteMeta(route, element, RouteType.parse(SERVICE), null);
                 } else if (types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
                     logger.info(">>> Found fragment route: " + tm.toString() + " <<<");
-                    routeMeta = new RouteMeta(route, element, RouteType.parse(FRAGMENT), null);
+
+                    // Get all fields annotation by @Autowired
+                    Map<String, Integer> paramsType = new HashMap<>();
+                    Map<String, Autowired> injectConfig = new HashMap<>();
+                    for (Element field : element.getEnclosedElements()) {
+                        if (field.getKind().isField() && field.getAnnotation(Autowired.class) != null && !types.isSubtype(field.asType(), iProvider)) {
+                            // It must be field, then it has annotation, but it not be provider.
+                            Autowired paramConfig = field.getAnnotation(Autowired.class);
+                            String injectName = StringUtils.isEmpty(paramConfig.name()) ? field.getSimpleName().toString() : paramConfig.name();
+                            paramsType.put(injectName, typeUtils.typeExchange(field));
+                            injectConfig.put(injectName, paramConfig);
+                        }
+                    }
+                    routeMeta = new RouteMeta(route, element, RouteType.parse(FRAGMENT), paramsType);
+                    routeMeta.setInjectConfig(injectConfig);
                 } else {
                     throw new RuntimeException("ARouter::Compiler >>> Found unsupported class type, type = [" + types.toString() + "].");
                 }

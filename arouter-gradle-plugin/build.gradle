@@ -1,7 +1,7 @@
 apply plugin: 'groovy'
 
 ext {
-    bintrayName = 'arouter-register'
+    bintrayName = 'arouter-gradle-plugin'
     artifact = bintrayName
     libraryName = 'ARouter register gradle plugin'
     libraryDescription = 'A gradle plugin used for arouter route map register'

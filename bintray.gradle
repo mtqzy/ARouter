@@ -1,5 +1,4 @@
 // backup of [https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle]
-
 apply plugin: 'com.jfrog.bintray'
 
 version = libraryVersion
@@ -38,24 +37,28 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 bintray {
     user = properties.getProperty("bintray.user")
     key = properties.getProperty("bintray.apikey")
+    override = true
+//    dryRun = false
+    publish = true
 
     configurations = ['archives']
     pkg {
-        repo = bintrayRepo
+        repo = "alibaba"
+        userOrg = 'maitao'
         name = bintrayName
         desc = libraryDescription
         websiteUrl = siteUrl
         vcsUrl = gitUrl
-        licenses = allLicenses
+        licenses = ["Apache-2.0"]
         publish = true
         publicDownloadNumbers = true
         version {
             desc = libraryDescription
-            gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
-                passphrase = properties.getProperty("bintray.gpg.password")
-                //Optional. The passphrase for GPG signing'
-            }
+//            gpg {
+//                sign = true //Determines whether to GPG sign the files. The default is false
+//                passphrase = properties.getProperty("bintray.gpg.password")
+//                //Optional. The passphrase for GPG signing'
+//            }
         }
     }
 }
