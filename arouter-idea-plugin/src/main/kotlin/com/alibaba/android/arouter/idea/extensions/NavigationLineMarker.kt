@@ -86,7 +86,7 @@ class NavigationLineMarker : LineMarkerProviderDescriptor(), GutterIconNavigatio
             val method = psiElement.resolveMethod() ?: return false
             val parent = method.parent
 
-            if (method.name == "build" && parent is PsiClass) {
+            if (BUILD_METHOD_NAME.contains(method.name) && parent is PsiClass) {
                 if (isClassOfARouter(parent)) {
                     return true
                 }
@@ -100,19 +100,20 @@ class NavigationLineMarker : LineMarkerProviderDescriptor(), GutterIconNavigatio
      */
     private fun isClassOfARouter(psiClass: PsiClass): Boolean {
         // It was ARouter
-        if (psiClass.name.equals(SDK_NAME)) {
+        if (SDK_NAME.contains(psiClass.name.toString())) {
             return true
         }
 
         // It super class was ARouter
-        psiClass.supers.find { it.name == SDK_NAME } ?: return false
+        psiClass.supers.find { SDK_NAME.contains(it.name.toString())  } ?: return false
 
         return true
     }
 
     companion object {
         const val ROUTE_ANNOTATION_NAME = "com.alibaba.android.arouter.facade.annotation.Route"
-        const val SDK_NAME = "ARouter"
+        const val SDK_NAME = "ARouter|RxRouter"
+        const val BUILD_METHOD_NAME = "build|buildUrl|path"
 
         // Notify
         const val NOTIFY_SERVICE_NAME = "ARouter Plugin Tips"

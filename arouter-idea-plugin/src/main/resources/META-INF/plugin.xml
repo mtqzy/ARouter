@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>arouter-roadsign</id>
-    <name>ARouter Helper</name>
+    <name>ARouter Helper(maitao)</name>
     <version>1.0.0</version>
     <vendor email="zhilong.liu@aliyun.com" url="https://www.alibaba.com">Alibaba</vendor>
     <idea-version since-build="162.0"/>
