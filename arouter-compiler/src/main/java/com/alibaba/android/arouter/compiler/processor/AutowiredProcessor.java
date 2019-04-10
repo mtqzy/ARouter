@@ -159,6 +159,10 @@ public class AutowiredProcessor extends BaseProcessor {
                             throw new IllegalAccessException("The field [" + fieldName + "] need autowired from intent, its parent must be activity or fragment!");
                         }
 
+                        if (TypeKind.values()[typeUtils.typeExchange(element)] == TypeKind.STRING) {
+                            injectMethodBuilder.addStatement("String default_" + fieldName + " = substitute." + fieldName);
+                        }
+
                         statement = buildStatement(originalValue, statement, typeUtils.typeExchange(element), isActivity);
                         if (statement.startsWith("serializationService.")) {   // Not mortals
                             injectMethodBuilder.beginControlFlow("if (null != serializationService)");
@@ -180,6 +184,12 @@ public class AutowiredProcessor extends BaseProcessor {
                             injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
                             injectMethodBuilder.addStatement(
                                     "$T.e(\"" + Consts.TAG + "\", \"The field '" + fieldName + "' is null, in class '\" + $T.class.getName() + \"!\")", AndroidLog, ClassName.get(parent));
+                            injectMethodBuilder.endControlFlow();
+                        }
+
+                        if (TypeKind.values()[typeUtils.typeExchange(element)] == TypeKind.STRING) {
+                            injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
+                            injectMethodBuilder.addStatement("substitute." + fieldName + " = default_" + fieldName);
                             injectMethodBuilder.endControlFlow();
                         }
                     }
