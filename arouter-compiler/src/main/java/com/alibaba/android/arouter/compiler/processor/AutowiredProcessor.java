@@ -159,24 +159,57 @@ public class AutowiredProcessor extends BaseProcessor {
                             throw new IllegalAccessException("The field [" + fieldName + "] need autowired from intent, its parent must be activity or fragment!");
                         }
 
-                        if (TypeKind.values()[typeUtils.typeExchange(element)] == TypeKind.STRING) {
-                            injectMethodBuilder.addStatement("String default_" + fieldName + " = substitute." + fieldName);
-                        }
-
                         statement = buildStatement(originalValue, statement, typeUtils.typeExchange(element), isActivity);
                         if (statement.startsWith("serializationService.")) {   // Not mortals
                             injectMethodBuilder.beginControlFlow("if (null != serializationService)");
                             injectMethodBuilder.addStatement(
-                                    "substitute." + fieldName + " = " + statement,
+                                    "$T default_" + fieldName + " = " + statement,
+                                    ClassName.get(element.asType()),
                                     (StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name()),
                                     ClassName.get(element.asType())
                             );
+
+                            injectMethodBuilder.beginControlFlow("if (null != default_" + fieldName + ")");
+                            injectMethodBuilder.addStatement("substitute.$N = default_$N", fieldName, fieldName);
+                            injectMethodBuilder.endControlFlow();
+
                             injectMethodBuilder.nextControlFlow("else");
                             injectMethodBuilder.addStatement(
                                     "$T.e(\"" + Consts.TAG + "\", \"You want automatic inject the field '" + fieldName + "' in class '$T' , then you should implement 'SerializationService' to support object auto inject!\")", AndroidLog, ClassName.get(parent));
                             injectMethodBuilder.endControlFlow();
                         } else {
-                            injectMethodBuilder.addStatement(statement, StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
+
+                            TypeKind typeKind = TypeKind.values()[typeUtils.typeExchange(element)];
+                            if (typeKind == TypeKind.STRING
+                                || typeKind == TypeKind.SERIALIZABLE
+                                || typeKind == TypeKind.PARCELABLE) {
+                                String clazzType = "";
+                                String bundleStr = isActivity ? "substitute.getIntent()" : "substitute.getArguments()";
+                                String extra = "";
+                                switch (typeKind) {
+                                    case STRING:
+                                        clazzType = "java.lang.String";
+                                        extra = isActivity ? "getStringExtra($S)" : "getString($S)";
+                                        break;
+                                    case SERIALIZABLE:
+                                        clazzType = "java.io.Serializable";
+                                        extra = isActivity ? "getSerializableExtra($S)" : "getSerializable($S)";
+                                        break;
+                                    case PARCELABLE:
+                                        clazzType = "android.os.Parcelable";
+                                        extra = isActivity ? "getParcelableExtra($S)" : "getParcelable($S)";
+                                        break;
+                                }
+                                injectMethodBuilder.addStatement(clazzType + " $N = " + bundleStr + "." + extra,
+                                    fieldName,
+                                    StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
+                                injectMethodBuilder.beginControlFlow("if (null != $N)", fieldName);
+                                injectMethodBuilder.addStatement("substitute.$N = ($T)$N", fieldName, ClassName.get(element.asType()), fieldName);
+                                injectMethodBuilder.endControlFlow();
+                            }
+                            else {
+                                injectMethodBuilder.addStatement(statement, StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
+                            }
                         }
 
                         // Validator
@@ -184,12 +217,6 @@ public class AutowiredProcessor extends BaseProcessor {
                             injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
                             injectMethodBuilder.addStatement(
                                     "$T.e(\"" + Consts.TAG + "\", \"The field '" + fieldName + "' is null, in class '\" + $T.class.getName() + \"!\")", AndroidLog, ClassName.get(parent));
-                            injectMethodBuilder.endControlFlow();
-                        }
-
-                        if (TypeKind.values()[typeUtils.typeExchange(element)] == TypeKind.STRING) {
-                            injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
-                            injectMethodBuilder.addStatement("substitute." + fieldName + " = default_" + fieldName);
                             injectMethodBuilder.endControlFlow();
                         }
                     }
